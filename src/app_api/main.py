@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from src.errors import ApiError, api_error_handler
 from src.app_api.middlewares import log_extra_middleware
-from src.app_api.routes.parser_router import parser_router
+from src.app_api.routes.llm_router import parser_router
 
 logger = logging.getLogger(__name__)
 
