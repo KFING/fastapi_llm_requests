@@ -1,6 +1,6 @@
 from enum import Enum
 
-from src.dto.feed_rec_info import Source
+from src.dto.llm_info import Source
 
 
 class RedisTask(Enum):

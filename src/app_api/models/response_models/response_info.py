@@ -2,14 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from src.dto.feed_rec_info import FeedRecPostFull, TmpListFeedRecPostShort
-
-
-class Provider(BaseModel):
-    openai = "openai"
-    deepseek = "deepseek"
-    gemini = "gemini"
-    claude = "claude"
+from src.dto.llm_info import Provider, Prompt
 
 
 class ResponseLLMApiMdl(BaseModel):
@@ -17,4 +10,8 @@ class ResponseLLMApiMdl(BaseModel):
     error: str
     provider: Provider
     created_at: datetime
+
+class ResponsePromptApiMdl(BaseModel):
+    base_prompt: Prompt
+    modified_prompts: list[str]
 

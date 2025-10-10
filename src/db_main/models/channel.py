@@ -4,7 +4,7 @@ from sqlalchemy import DateTime, Enum, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db_main.database import Base
-from src.dto.feed_rec_info import Source
+from src.dto.llm_info import Source
 
 
 class ChannelDbMdl(Base):

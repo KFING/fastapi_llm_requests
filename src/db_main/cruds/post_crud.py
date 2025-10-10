@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db_main.cruds import channel_crud
 from src.db_main.models.post import PostDbMdl
-from src.dto.feed_rec_info import Post
+from src.dto.llm_info import Post
 
 
 async def get_posts_by_channel_id(db: AsyncSession, channel_id: int) -> Sequence[PostDbMdl]:

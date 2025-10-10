@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db_main.models.channel import ChannelDbMdl
-from src.dto.feed_rec_info import Channel, Source
+from src.dto.llm_info import Channel, Source
 
 
 async def get_channel_by_source_by_channel_name(db: AsyncSession, source: Source, channel_name: str) -> ChannelDbMdl:
