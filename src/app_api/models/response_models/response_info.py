@@ -12,6 +12,6 @@ class ResponseLLMApiMdl(BaseModel):
     created_at: datetime
 
 class ResponsePromptApiMdl(BaseModel):
-    base_prompt: Prompt
-    modified_prompts: list[str]
+    prompt_template: str
+    prompt_version: str
 
