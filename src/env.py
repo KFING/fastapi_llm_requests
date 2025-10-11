@@ -60,7 +60,8 @@ class Settings(BaseSettings):
     CELERY_BACKEND: SecretStr = SecretStr("")
     CELERY_BROKER: SecretStr = SecretStr("")
 
-    DEEP_SEEK_API_KEY: SecretStr = SecretStr("")
+    DEEPSEEK_API_KEY: SecretStr = SecretStr("")
+    OPENAI_API_KEY: SecretStr = SecretStr("")
 
     DB_URL: PostgresDsn
 

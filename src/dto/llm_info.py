@@ -51,4 +51,4 @@ class Prompt(BaseModel):
     prompt_template: str
 
     def get_prompt(self, text: str, context: str, exclude: Exclude) -> str:
-        return self.prompt_template.format(text, context, exclude)
+        return f"{self.prompt_template.format(text, context, exclude)}"

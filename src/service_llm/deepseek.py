@@ -6,7 +6,7 @@ from src.env import settings
 
 @sync_to_async
 def prompt(client: OpenAI, prompt: str) -> str:
-    client_s = OpenAI(api_key=settings.DEEP_SEEK_API_KEY.get_secret_value(), base_url="https://api.deepseek.com")
+    client_s = OpenAI(api_key=settings.DEEPSEEK_API_KEY.get_secret_value(), base_url="https://api.deepseek.com")
     response = client_s.chat.completions.create(
         model="deepseek-chat",
         messages=[

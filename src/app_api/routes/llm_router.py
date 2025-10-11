@@ -19,7 +19,7 @@ llm_router = APIRouter(
 
 @llm_router.post("/create_query/{prompt_id}/{lang_abbr}")
 async def create_query(prompt_id: int, lang_abbr: str, provider: Provider, cache_key: str, llm_query_params: LLMRequestParametersApiMdl, log_extra: dict[str, str] = Depends(get_log_extra)) ->  ResponseLLMApiMdl:
-    return await llm_manager.create_query(llm_query_params, provider, cache_key, lang_abbr, log_extra=log_extra)
+    return await llm_manager.create_query(prompt_id, llm_query_params, provider, cache_key, lang_abbr, log_extra=log_extra)
 
 
 """@parser_router.get("/progress_parser")
