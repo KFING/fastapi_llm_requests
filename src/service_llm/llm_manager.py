@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from redis.asyncio import Redis
 
@@ -18,8 +19,8 @@ async def create_query(llm_query_params: LLMRequestParametersApiMdl, provider: P
 
 async def create_prompt(prompt_parameters: PromptRequestApiMdl,  log_extra: dict[str, str]) -> None:
     rds = Redis(host="redis", port=6379)
-    await rds.set(f"{prompt_parameters.prompt_id}v0", prompt_parameters.prompt_template)
-    logger.debug(f"create_prompt :: success created prompt {prompt_parameters.prompt_id}v0", extra=log_extra)
+    await rds.hset(f"{prompt_parameters.prompt_id}", f"{prompt_parameters.prompt_id}v0", prompt_parameters.prompt_template)
+    logger.debug(f"create_prompt :: success created prompt id:{prompt_parameters.prompt_id} version:{prompt_parameters.prompt_id}v0 -- {datetime.now()}", extra=log_extra)
 
 async def get_prompt(prompt_id: int,  log_extra: dict[str, str]) -> None:
     rds = Redis(host="redis", port=6379)

@@ -2,9 +2,10 @@ import logging
 
 from fastapi import FastAPI
 
+from src.app_api.routes.llm_router import llm_router
+from src.app_api.routes.prompt_router import prompt_router
 from src.errors import ApiError, api_error_handler
 from src.app_api.middlewares import log_extra_middleware
-from src.app_api.routes.llm_router import parser_router
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,9 @@ def get_app() -> FastAPI:
     app = FastAPI()
 
     # routes
-    app.include_router(parser_router)
+    app.include_router(llm_router)
+    app.include_router(prompt_router)
+
 
     # middlewares
     app.middleware("http")(log_extra_middleware)
