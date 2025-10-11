@@ -10,13 +10,10 @@ from src.app_api.models.response_models.response_info import ResponseLLMApiMdl, 
 from src.dto.llm_info import Provider, Prompt
 
 from langchain.chains import RetrievalQA
-from langchain.embeddings import CacheBackedEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.chat_models import ChatOpenAI
-from langchain_community.document_loaders import JSONLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.storage import RedisStore
-from langchain_community.vectorstores import Qdrant
+
+from langchain_anthropic import ChatAnthropic
+from langchain.schema import HumanMessage
 from langchain import OpenAI
 
 from src.env import settings
@@ -51,6 +48,18 @@ async def deepseek_llm(prompt: str, temperature: float, provider: Provider) -> R
 
 async def openai_llm(prompt: str, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
     llm = OpenAI(openai_api_key=settings.OPENAI_CLIENT_ID.get_secret_value(), temperature=temperature)
+    translations = [""]
+    created_at = datetime.now()
+    return ResponseLLMApiMdl(
+        translations=translations,
+        error="",
+        provider=provider,
+        created_at=created_at)
+
+async def cloude_llm(prompt: str, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
+    llm = ChatAnthropic(model_name="claude-3-5-sonnet-20241022", temperature=temperature, timeout=0.5)
+    response = llm.invoke([HumanMessage(content=prompt)])
+
     translations = [""]
     created_at = datetime.now()
     return ResponseLLMApiMdl(
