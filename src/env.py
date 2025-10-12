@@ -5,7 +5,7 @@ from enum import Enum, unique
 from pathlib import Path
 from typing import Final
 
-from pydantic import HttpUrl, PostgresDsn, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 ROOT_PATH = Path(__file__).parent.parent
@@ -63,11 +63,6 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: SecretStr = SecretStr("")
     OPENAI_API_KEY: SecretStr = SecretStr("")
 
-    DB_URL: PostgresDsn
-
-    QDRANT_URL: HttpUrl
-    CACHE_DB_URL: str
-
     @property
     def is_local(self) -> bool:
         return self.ENV == AppEnv.LOCAL
@@ -89,7 +84,9 @@ settings: Final = Settings(app=AppName.app_api)  # pyright: ignore
 
 SCRAPPER_RESULTS_DIR = settings.ROOT_PATH / ".var" / "data"
 SCRAPPER_RESULTS_DIR__YOUTUBE = settings.ROOT_PATH / ".var" / "data" / "youtube"
-SCRAPPER_RESULTS_DIR__YOUTUBE_SUBTITLE = settings.ROOT_PATH / ".var" / "data" / "youtube" / "subtitles"
+SCRAPPER_RESULTS_DIR__YOUTUBE_SUBTITLE = (
+    settings.ROOT_PATH / ".var" / "data" / "youtube" / "subtitles"
+)
 SCRAPPER_RESULTS_DIR__INSTAGRAM = settings.ROOT_PATH / ".var" / "data" / "instagram"
 SCRAPPER_RESULTS_DIR__TELEGRAM = settings.ROOT_PATH / ".var" / "data" / "telegram"
 

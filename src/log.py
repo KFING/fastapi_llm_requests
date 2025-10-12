@@ -138,15 +138,23 @@ class ExFormatter(logging.Formatter):
 
         rec_name = f"{record.name}:{record.levelno}"
         if record.name.startswith("src."):
-            rec_name = f'./{"/".join(record.name.split("."))}.py:{record.levelno}'
+            rec_name = f"./{'/'.join(record.name.split('.'))}.py:{record.levelno}"
         elif record.name == "__main__":
             import __main__
 
-            rec_name = f"{Path(__main__.__file__).relative_to(ROOT_PATH)}:{record.levelno}"
+            rec_name = (
+                f"{Path(__main__.__file__).relative_to(ROOT_PATH)}:{record.levelno}"
+            )
 
         extra_fmt = f" :: {extra}" if len(extra) > 0 else ""
         ln_start = "\n\n" if req_started else ""
-        ln_end = f" === {status_code_fmt}" f" {FG.Cyan if req_duration <= 0.2 else FG.DARK_red}({req_duration:0.2f}s){FG.Default}" f"\n\n" if req_ended else ""
+        ln_end = (
+            f" === {status_code_fmt}"
+            f" {FG.Cyan if req_duration <= 0.2 else FG.DARK_red}({req_duration:0.2f}s){FG.Default}"
+            f"\n\n"
+            if req_ended
+            else ""
+        )
         return (
             f"{ln_start}{_LVL_COLOR_MAP[record.levelno]}{_LVL_NAME_MAP[record.levelno]} {at[-5:]:0>5}"
             f"|{req_mark} {rec_name} |{FG.Default} {record.message}{extra_fmt}{ln_end}"
@@ -169,7 +177,9 @@ def setup_logging(log_lvl: LogLevel = settings.LOG_LVL) -> None:
 
     if settings.is_testing or settings.is_local:
         logHandler.setFormatter(local_text_formatter)
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s", handlers=[logHandler])
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s", handlers=[logHandler]
+        )
         logging.getLogger("src").setLevel(logging.DEBUG)
     else:
         logHandler.setFormatter(json_formatter)
@@ -185,13 +195,21 @@ def setup_logging(log_lvl: LogLevel = settings.LOG_LVL) -> None:
 
 
 @contextlib.contextmanager
-def scope(logger: logging.Logger, msg: str, *, req_id: str | None = None, enable_endings: bool = True) -> Iterator[dict[str, str]]:  # noqa: C901
+def scope(
+    logger: logging.Logger,
+    msg: str,
+    *,
+    req_id: str | None = None,
+    enable_endings: bool = True,
+) -> Iterator[dict[str, str]]:  # noqa: C901
     setup_logging()
     setup_sentry()
     if settings.is_testing:
         req_id = ""
     elif settings.is_local or not req_id:
-        req_id = f"{int(time.monotonic() * 1000).to_bytes(8, byteorder='big').hex():0>16}"
+        req_id = (
+            f"{int(time.monotonic() * 1000).to_bytes(8, byteorder='big').hex():0>16}"
+        )
     log_extra = {"req_id": req_id}
     if enable_endings:
         logger.debug(msg, extra={**log_extra, "req_status": -1})
@@ -252,8 +270,14 @@ def setup_sentry() -> None:
     match sentry_scope:
         case SentryScope.APP_API:
             integrations = [
-                StarletteIntegration(transaction_style="endpoint", failed_request_status_codes=[range(403, 599)]),
-                FastApiIntegration(transaction_style="endpoint", failed_request_status_codes=[range(403, 599)]),
+                StarletteIntegration(
+                    transaction_style="endpoint",
+                    failed_request_status_codes=[range(403, 599)],
+                ),
+                FastApiIntegration(
+                    transaction_style="endpoint",
+                    failed_request_status_codes=[range(403, 599)],
+                ),
                 CeleryIntegration(monitor_beat_tasks=True),
             ]
         case SentryScope.APP_CELERY:
@@ -267,7 +291,9 @@ def setup_sentry() -> None:
         logger.warning("Sentry NOT initialized - empty DSN")
         return
 
-    sentry_logging = LoggingIntegration(level=logging.DEBUG, event_level=logging.CRITICAL)
+    sentry_logging = LoggingIntegration(
+        level=logging.DEBUG, event_level=logging.CRITICAL
+    )
     sentry_sdk.init(
         dsn=str(dsn),
         enable_tracing=False,
@@ -280,7 +306,11 @@ def setup_sentry() -> None:
             AsyncioIntegration(),
         ],
         # release=CONTAINER_STAMP,
-        **({} if not settings.SENTRY_CA_BUNDLE else {"ca_certs": str(settings.SENTRY_CA_BUNDLE)}),  # type: ignore
+        **(
+            {}
+            if not settings.SENTRY_CA_BUNDLE  # type: ignore
+            else {"ca_certs": str(settings.SENTRY_CA_BUNDLE)}  # type: ignore
+        ),  # type: ignore
     )
     sentry_sdk.set_tag("app_name", settings.app.value)
     sentry_sdk.set_context("application", {"name": settings.app.value})

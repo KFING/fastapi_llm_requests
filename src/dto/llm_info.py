@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
 from enum import Enum, StrEnum, unique
-from pathlib import Path
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 
 @unique
@@ -17,11 +15,13 @@ class Lang(Enum):
     EN = "en"
     RU = "ru"
 
+
 class Provider(StrEnum):
     openai = "openai"
     deepseek = "deepseek"
     gemini = "gemini"
     claude = "claude"
+
 
 class MediaFormat(StrEnum):
     MP3 = "mp3"
@@ -36,19 +36,24 @@ class MediaFormat(StrEnum):
     DOC = "doc"
     OTHER_FORMAT = "other_format"
 
+
 class MediaResolution(StrEnum):
     AUDIO_ONLY = "audio only"
-    OTHER_RESOLUTION= "other_format"
+    OTHER_RESOLUTION = "other_format"
+
 
 class Exclude(BaseModel):
     exception: str
     exceptions_list: list[str]
     # ["some workds 1:1 as in text", "yet onother"]
 
+
 class Prompt(BaseModel):
     prompt_id: int
     version: str
     prompt_template: str
 
-    def get_prompt(self, text: str, context: str, exclude: Exclude) -> str:
-        return f"{self.prompt_template.format(text, context, exclude)}"
+    def get_prompt(
+        self, text: str, context: str, exclude: Exclude, lang_abbr: str
+    ) -> str:
+        return f"{self.prompt_template.format(lang_abbr=lang_abbr, text=text, context=context, exclude=exclude)}"

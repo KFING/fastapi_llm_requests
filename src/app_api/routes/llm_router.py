@@ -3,8 +3,9 @@ import logging
 from fastapi import APIRouter, Depends
 
 from src.app_api.middlewares import get_log_extra
-from src.app_api.models.request_models.request_info import LLMRequestParametersApiMdl, ModifiedPromptParametersApiMdl, \
-    PromptRequestApiMdl
+from src.app_api.models.request_models.request_info import (
+    LLMRequestParametersApiMdl,
+)
 from src.app_api.models.response_models.response_info import ResponseLLMApiMdl
 from src.dto.llm_info import Provider
 from src.service_llm import llm_manager
@@ -18,8 +19,17 @@ llm_router = APIRouter(
 
 
 @llm_router.post("/create_query/{prompt_id}/{lang_abbr}")
-async def create_query(prompt_id: int, lang_abbr: str, provider: Provider, cache_key: str, llm_query_params: LLMRequestParametersApiMdl, log_extra: dict[str, str] = Depends(get_log_extra)) ->  ResponseLLMApiMdl:
-    return await llm_manager.create_query(prompt_id, llm_query_params, provider, cache_key, lang_abbr, log_extra=log_extra)
+async def create_query(
+    prompt_id: int,
+    lang_abbr: str,
+    provider: Provider,
+    llm_query_params: LLMRequestParametersApiMdl,
+    cache_key: str = "",
+    log_extra: dict[str, str] = Depends(get_log_extra),
+) -> ResponseLLMApiMdl:
+    return await llm_manager.create_query(
+        prompt_id, llm_query_params, provider, cache_key, lang_abbr, log_extra=log_extra
+    )
 
 
 """@parser_router.get("/progress_parser")

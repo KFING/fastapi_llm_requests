@@ -13,7 +13,14 @@ dependencies = [
     "langchain (>=0.3.27,<0.4.0) ; python_version >= \"3.12\" and python_version < \"4.0\"",
     "langchain-community (>=0.3.31,<0.4.0) ; python_version >= \"3.12\" and python_version < \"4.0\"",
     "langchain-openai (>=0.3.35,<0.4.0) ; python_version >= \"3.12\" and python_version < \"4.0\"",
-    "langchain-anthropic (>=0.3.22,<0.4.0) ; python_version >= \"3.12\" and python_version < \"4.0\""
+    "langchain-anthropic (>=0.3.22,<0.4.0) ; python_version >= \"3.12\" and python_version < \"4.0\"",
+    "mypy (>=1.18.2,<2.0.0)",
+    "pyright (>=1.1.406,<2.0.0)",
+    "ruff (>=0.14.0,<0.15.0)",
+    "sentry-sdk (>=2.41.0,<3.0.0)",
+    "python-json-logger (>=4.0.0,<5.0.0)",
+    "uvicorn (>=0.37.0,<0.38.0)",
+    "celery (>=5.5.3,<6.0.0)"
 ]
 
 

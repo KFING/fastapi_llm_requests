@@ -16,11 +16,20 @@ async def get_log_extra(request: Request) -> dict[str, str]:
     return getattr(request.state, "log_extra", {})
 
 
-async def log_extra_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+async def log_extra_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     if settings.is_local:
         await lock.acquire()
-    host: str = request.headers.get("x-forwarded-for", f"~{getattr(request.client, 'host', 'unknown')}:{getattr(request.client, 'port', 'unknown')}")
-    req_id = request.headers.get("x-correlation-id") or request.headers.get("x-operation-id") or request.headers.get("x-request-id")
+    host: str = request.headers.get(
+        "x-forwarded-for",
+        f"~{getattr(request.client, 'host', 'unknown')}:{getattr(request.client, 'port', 'unknown')}",
+    )
+    req_id = (
+        request.headers.get("x-correlation-id")
+        or request.headers.get("x-operation-id")
+        or request.headers.get("x-request-id")
+    )
     with log.scope(
         logger,
         f"{request.method} {request.url.path} {request.url.query} from {host}",
@@ -33,7 +42,9 @@ async def log_extra_middleware(request: Request, call_next: Callable[[Request], 
         log_extra["req_status"] = str(response.status_code)
         # if CONTAINER_STAMP:
         #    response.headers["X-Stoic-Backend-Version"] = CONTAINER_STAMP
-        response.headers["X-Request-ID"] = request.headers.get("x-request-id", log_extra["req_id"])
+        response.headers["X-Request-ID"] = request.headers.get(
+            "x-request-id", log_extra["req_id"]
+        )
         response.headers["X-Operation-ID"] = log_extra["req_id"]
         response.headers["X-Correlation-ID"] = log_extra["req_id"]
     if settings.is_local:

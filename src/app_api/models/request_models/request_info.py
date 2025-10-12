@@ -1,12 +1,10 @@
-from datetime import datetime
-
 from pydantic import BaseModel
 
-from src.dto.llm_info import Source, Exclude
+from src.dto.llm_info import Exclude
 
 
 class LLMRequestParametersApiMdl(BaseModel):
-    prompt_version_id: str = 0
+    prompt_version_id: int = 0
     text: str
     context: str
     exclude: Exclude

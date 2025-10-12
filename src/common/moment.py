@@ -27,7 +27,9 @@ def select_max_dt(*args: datetime) -> datetime:
 
 def test_select_max_dt() -> None:
     assert as_utc(datetime(2024, 1, 1)) == datetime(2024, 1, 1, tzinfo=timezone.utc)
-    assert as_utc(datetime(2024, 1, 1)) == as_utc(datetime(2024, 1, 1, tzinfo=timezone.utc))
+    assert as_utc(datetime(2024, 1, 1)) == as_utc(
+        datetime(2024, 1, 1, tzinfo=timezone.utc)
+    )
     assert select_max_dt(
         datetime(2024, 1, 1),
     ) == datetime(2024, 1, 1)
