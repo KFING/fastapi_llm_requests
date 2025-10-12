@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import AsyncIterator
 
 from redis.asyncio import Redis
+from sqlalchemy.testing import variation
 
 from src.app_api.models.request_models.request_info import LLMRequestParametersApiMdl, ModifiedPromptParametersApiMdl, \
     PromptRequestApiMdl
@@ -30,7 +31,7 @@ class ResponseLLMApiMdl(BaseModel):
 
 """
 
-async def _deepseek_llm(prompt: str, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
+async def _deepseek_llm(prompt: str, variants: int, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
     llm = ChatOpenAI(
         api_key=settings.DEEPSEEK_API_KEY.get_secret_value(),
         base_url="https://api.deepseek.com/v1",
@@ -46,7 +47,7 @@ async def _deepseek_llm(prompt: str, temperature: float, provider: Provider) -> 
         provider=provider,
         created_at=created_at)
 
-async def _openai_llm(prompt: str, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
+async def _openai_llm(prompt: str, variants: int, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
     llm = OpenAI(openai_api_key=settings.OPENAI_CLIENT_ID.get_secret_value(), temperature=temperature)
     translations = [""]
     created_at = datetime.now()
@@ -56,11 +57,13 @@ async def _openai_llm(prompt: str, temperature: float, provider: Provider) -> Re
         provider=provider,
         created_at=created_at)
 
-async def _cloude_llm(prompt: str, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
-    llm = ChatAnthropic(model_name="claude-3-5-sonnet-20241022", temperature=temperature, timeout=0.5)
-    response = llm.invoke([HumanMessage(content=prompt)])
-
+async def _cloude_llm(prompt: str, variants: int, temperature: float, provider: Provider) -> ResponseLLMApiMdl:
+    llm = ChatAnthropic(model_name="claude-3-5-sonnet-20241022", temperature=temperature, timeout=0.5, api_key=settings.DEEPSEEK_API_KEY.get_secret_value())
     translations = [""]
+    translations: list[str] = []
+    for i in range(0, variants):
+        response = llm.invoke([HumanMessage(content=prompt)])
+        translations.append(response.content)
     created_at = datetime.now()
     return ResponseLLMApiMdl(
         translations=translations,
@@ -84,10 +87,12 @@ async def create_query(prompt_id: int, llm_query_params: LLMRequestParametersApi
     prompt = Prompt(prompt_id=prompt_id, version=prompt_version, prompt_template=prompt_template).get_prompt(llm_query_params.text, llm_query_params.context, llm_query_params.exclude)
     match provider:
         case Provider.deepseek:
-            response = await _deepseek_llm(prompt, llm_query_params.temperature, provider)
+            response = await _deepseek_llm(prompt, llm_query_params.variants, llm_query_params.temperature, provider)
+        case Provider.claude:
+            response = await _cloude_llm(prompt, llm_query_params.variants, llm_query_params.temperature, provider)
         case _:
-            response = await _openai_llm(prompt, llm_query_params.temperature, provider)
-    r.hset(cache_key, mapping={
+            response = await _openai_llm(prompt, llm_query_params.variants, llm_query_params.temperature, provider)
+    await rds.hset(cache_key, mapping={
         "translation": response.translations,
         "error": response.error,
         "provider": response.provider.value,
