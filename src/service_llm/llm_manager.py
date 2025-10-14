@@ -67,6 +67,7 @@ async def create_query(
     provider: Provider,
     cache_key: str,
     lang_abbr: str,
+    rds: Redis,
     log_extra: dict[str, str],
 ) -> ResponseLLMApiMdl:
     rds = Redis(host="localhost", port=6379)
@@ -168,7 +169,7 @@ async def create_query(
 
 
 async def create_prompt(
-    prompt_parameters: PromptRequestApiMdl, log_extra: dict[str, str]
+    prompt_parameters: PromptRequestApiMdl, rds: Redis, *, log_extra: dict[str, str]
 ) -> None:
     rds = Redis(host="localhost", port=6379)
     if await rds.exists(str(prompt_parameters.prompt_id)):
@@ -185,7 +186,7 @@ async def create_prompt(
 
 
 async def get_prompt(
-    prompt_id: int, log_extra: dict[str, str]
+    prompt_id: int, rds: Redis, *, log_extra: dict[str, str]
 ) -> AsyncIterator[ResponsePromptApiMdl]:  # dont forget about yield
     rds = Redis(host="localhost", port=6379)
     async for key, value in rds.hscan_iter(f"{prompt_id}"):
@@ -193,9 +194,8 @@ async def get_prompt(
 
 
 async def modify_prompt(
-    modify_parameters: ModifiedPromptParametersApiMdl, log_extra: dict[str, str]
+    modify_parameters: ModifiedPromptParametersApiMdl, rds: Redis, *, log_extra: dict[str, str]
 ) -> None:
-    rds = Redis(host="localhost", port=6379)
     prompt_version = f"{modify_parameters.prompt_id}v-1"
     async for key in rds.hscan_iter(f"{modify_parameters.prompt_id}", no_values=True):
         prompt_version = key

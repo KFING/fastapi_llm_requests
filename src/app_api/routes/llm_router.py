@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+from redis.asyncio import Redis
 
 from src.app_api.middlewares import get_log_extra
 from src.app_api.models.request_models.request_info import (
@@ -27,8 +28,10 @@ async def create_query(
     cache_key: str = "",
     log_extra: dict[str, str] = Depends(get_log_extra),
 ) -> ResponseLLMApiMdl:
+    rds = Redis(host="localhost", port=6379)
+
     return await llm_manager.create_query(
-        prompt_id, llm_query_params, provider, cache_key, lang_abbr, log_extra=log_extra
+        prompt_id, llm_query_params, provider, cache_key, lang_abbr,rds, log_extra=log_extra
     )
 
 
