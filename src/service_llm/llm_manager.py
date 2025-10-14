@@ -70,7 +70,6 @@ async def create_query(
     rds: Redis,
     log_extra: dict[str, str],
 ) -> ResponseLLMApiMdl:
-    rds = Redis(host="localhost", port=6379)
     if len(cache_key) > 0:
         logger.debug(
             f"create_query :: cache_key is not none. prompt_id: {prompt_id} -- {datetime.now()}",
@@ -171,7 +170,6 @@ async def create_query(
 async def create_prompt(
     prompt_parameters: PromptRequestApiMdl, rds: Redis, *, log_extra: dict[str, str]
 ) -> None:
-    rds = Redis(host="localhost", port=6379)
     if await rds.exists(str(prompt_parameters.prompt_id)):
         return
     prompt_version = f"{prompt_parameters.prompt_id}v0"
@@ -188,7 +186,6 @@ async def create_prompt(
 async def get_prompt(
     prompt_id: int, rds: Redis, *, log_extra: dict[str, str]
 ) -> AsyncIterator[ResponsePromptApiMdl]:  # dont forget about yield
-    rds = Redis(host="localhost", port=6379)
     async for key, value in rds.hscan_iter(f"{prompt_id}"):
         yield ResponsePromptApiMdl(prompt_version=key, prompt_template=value)
 
