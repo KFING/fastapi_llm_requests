@@ -7,4 +7,4 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "60379:6379"
+      - "60001:6379"

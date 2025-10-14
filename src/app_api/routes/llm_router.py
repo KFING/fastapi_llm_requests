@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
+from src.app_api.dependencies import get_redis_db_main
 from src.app_api.middlewares import get_log_extra
 from src.app_api.models.request_models.request_info import (
     LLMRequestParametersApiMdl,
@@ -23,15 +24,20 @@ llm_router = APIRouter(
 async def create_query(
     prompt_id: int,
     lang_abbr: str,
-    provider: Provider,
     llm_query_params: LLMRequestParametersApiMdl,
+    provider: Provider = Provider.openai,
     cache_key: str = "",
+    redis: Redis = Depends(get_redis_db_main),
     log_extra: dict[str, str] = Depends(get_log_extra),
 ) -> ResponseLLMApiMdl:
-    rds = Redis(host="localhost", port=6379)
-
     return await llm_manager.create_query(
-        prompt_id, llm_query_params, provider, cache_key, lang_abbr,rds, log_extra=log_extra
+        prompt_id,
+        llm_query_params,
+        provider,
+        cache_key,
+        lang_abbr,
+        redis,
+        log_extra=log_extra,
     )
 
 

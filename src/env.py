@@ -62,6 +62,10 @@ class Settings(BaseSettings):
 
     DEEPSEEK_API_KEY: SecretStr = SecretStr("")
     OPENAI_API_KEY: SecretStr = SecretStr("")
+    CLAUDE_API_KEY: SecretStr = SecretStr("")
+
+    REDIS_HOST: SecretStr = SecretStr("")
+    REDIS_PORT: SecretStr = SecretStr("")
 
     @property
     def is_local(self) -> bool:

@@ -1,4 +1,6 @@
+import ast
 import logging
+import re
 from datetime import datetime
 from typing import AsyncIterator
 
@@ -35,6 +37,21 @@ class ResponseLLMApiMdl(BaseModel):
 """
 
 
+def wrap_excluded_words(text: str, exclude: list[str]) -> str:
+    exclude_sorted = sorted(exclude, key=len, reverse=True)
+    pattern = re.compile(r"\b(" + "|".join(map(re.escape, exclude_sorted)) + r")\b")
+
+    def replacer(match: re.Match) -> str:
+        original = match.group(0)
+        return f"<keep>{original}</keep>"
+
+    return pattern.sub(replacer, text)
+
+
+def unwrap_kept_words(text: str) -> str:
+    return re.sub(r"</?keep>", "", text)
+
+
 async def _deepseek_llm(temperature: float) -> ChatOpenAI:
     return ChatOpenAI(
         api_key=settings.DEEPSEEK_API_KEY.get_secret_value(),
@@ -55,9 +72,7 @@ async def _openai_llm(temperature: float) -> OpenAI:
 """async def _claude_llm(temperature: float) -> ChatAnthropic:
     return ChatAnthropic(
         model_name="claude-3-5-sonnet-20241022",
-        temperature=temperature,
-        timeout=0.5,
-        api_key=settings.DEEPSEEK_API_KEY.get_secret_value(),
+        anthropic_api_key=settings.CLAUDE_API_KEY.get_secret_value(),
     )"""
 
 
@@ -76,22 +91,26 @@ async def create_query(
             extra=log_extra,
         )
         if await rds.exists(cache_key):
-            response = await rds.hgetall(cache_key)
+            response = await rds.hgetall(cache_key)  # type: ignore
             logger.debug(
                 f"create_query :: cache_key is exist. response from db: {type(response)} prompt_id: {prompt_id} -- {datetime.now()}",
                 extra=log_extra,
             )
             return ResponseLLMApiMdl(
-                prompt_id=response["prompt_id"],
-                translations=response["translations"],
-                error=response["error"],
-                provider=response["provider"],
-                created_at=response["created_at"],
+                prompt_id=response[b"prompt_id"].decode("utf-8"),
+                translations=ast.literal_eval(
+                    response[b"translations"].decode("utf-8")
+                ),
+                error=response[b"error"].decode("utf-8"),
+                provider=response[b"provider"].decode("utf-8"),
+                created_at=response[b"created_at"].decode("utf-8"),
             )
+
+
     if not await rds.exists(str(prompt_id)):
         response = ResponseLLMApiMdl(
             prompt_id=prompt_id,
-            translations=[""],
+            translations=[],
             error=f"prompt does not exist with id: {prompt_id}",
             provider=provider,
             created_at=datetime.now(),
@@ -103,13 +122,23 @@ async def create_query(
         return response
 
     prompt_version = f"{prompt_id}v{llm_query_params.prompt_version_id}"
-    prompt_template = await rds.hget(f"{prompt_id}", prompt_version)
+    prompt_template = await rds.hget(f"{prompt_id}", prompt_version)  # type: ignore
+    if prompt_template is None:
+        return ResponseLLMApiMdl(
+            prompt_id=0,
+            translations=[],
+            error="incorrect prompt_template",
+            provider=provider,
+            created_at=datetime.now(),
+        )
     prompt = Prompt(
         prompt_id=prompt_id, version=prompt_version, prompt_template=prompt_template
     ).get_prompt(
-        llm_query_params.text,
+        wrap_excluded_words(
+            llm_query_params.text, llm_query_params.exclude.exceptions_list
+        ),
         llm_query_params.context,
-        llm_query_params.exclude,
+        llm_query_params.exclude.exception,
         lang_abbr,
     )
     logger.debug(
@@ -120,8 +149,8 @@ async def create_query(
     match provider:
         case Provider.deepseek:
             llm = await _deepseek_llm(llm_query_params.temperature)
-        #        case Provider.claude:
-        #            llm = await _claude_llm(llm_query_params.temperature)
+        # case Provider.claude:
+        # llm = await _claude_llm(llm_query_params.temperature)  # type: ignore
         case _:
             llm = await _openai_llm(llm_query_params.temperature)
 
@@ -137,7 +166,7 @@ async def create_query(
     try:
         for i in range(0, llm_query_params.variants):
             llm_response = llm.invoke(prompt)
-            translations.append(str(llm_response.content))
+            translations.append(unwrap_kept_words(str(llm_response.content)))
             logger.debug(
                 f"create_query :: LLM sent response for variant: {i} and translit text. prompt_id: {prompt_id} -- {datetime.now()}",
                 extra=log_extra,
@@ -154,11 +183,11 @@ async def create_query(
     )
 
     if len(cache_key) > 0:
-        await rds.hset(
+        await rds.hset(  # type: ignore
             cache_key,
             mapping={
                 "prompt_id": response.prompt_id,
-                "translation": str(response.translations),
+                "translations": str(response.translations),
                 "error": response.error,
                 "provider": response.provider.value,
                 "created_at": str(response.created_at),
@@ -173,7 +202,7 @@ async def create_prompt(
     if await rds.exists(str(prompt_parameters.prompt_id)):
         return
     prompt_version = f"{prompt_parameters.prompt_id}v0"
-    await rds.hset(
+    await rds.hset(  # type: ignore
         str(prompt_parameters.prompt_id),
         mapping={prompt_version: prompt_parameters.prompt_template},
     )
@@ -185,20 +214,23 @@ async def create_prompt(
 
 async def get_prompt(
     prompt_id: int, rds: Redis, *, log_extra: dict[str, str]
-) -> AsyncIterator[ResponsePromptApiMdl]:  # dont forget about yield
+) -> AsyncIterator[ResponsePromptApiMdl]:
     async for key, value in rds.hscan_iter(f"{prompt_id}"):
         yield ResponsePromptApiMdl(prompt_version=key, prompt_template=value)
 
 
 async def modify_prompt(
-    modify_parameters: ModifiedPromptParametersApiMdl, rds: Redis, *, log_extra: dict[str, str]
+    modify_parameters: ModifiedPromptParametersApiMdl,
+    rds: Redis,
+    *,
+    log_extra: dict[str, str],
 ) -> None:
     prompt_version = f"{modify_parameters.prompt_id}v-1"
     async for key in rds.hscan_iter(f"{modify_parameters.prompt_id}", no_values=True):
         prompt_version = key
     prompt_id, version_id = prompt_version.split("v")
     prompt_version = f"{prompt_id}v{int(version_id) + 1}"
-    await rds.hset(
+    await rds.hset(  # type: ignore
         f"{modify_parameters.prompt_id}",
         mapping={prompt_version: modify_parameters.prompt_template},
     )
