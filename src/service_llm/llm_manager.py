@@ -126,20 +126,29 @@ async def create_query(
         return ResponseLLMApiMdl(
             prompt_id=0,
             translations=[],
-            error="incorrect prompt_template",
+            error="prompt_template is None",
             provider=provider,
             created_at=datetime.now(),
         )
-    prompt = Prompt(
-        prompt_id=prompt_id, version=prompt_version, prompt_template=prompt_template
-    ).get_prompt(
-        wrap_excluded_words(
-            llm_query_params.text, llm_query_params.exclude.exceptions_list
-        ),
-        llm_query_params.context,
-        llm_query_params.exclude.exception,
-        lang_abbr,
-    )
+    try:
+        prompt = Prompt(
+            prompt_id=prompt_id, version=prompt_version, prompt_template=prompt_template
+        ).get_prompt(
+            wrap_excluded_words(
+                llm_query_params.text, llm_query_params.exclude.exceptions_list
+            ),
+            llm_query_params.context,
+            llm_query_params.exclude.exception,
+            lang_abbr,
+        )
+    except Exception:
+        return ResponseLLMApiMdl(
+            prompt_id=0,
+            translations=[],
+            error="prompt_template is invalid",
+            provider=provider,
+            created_at=datetime.now(),
+        )
     logger.debug(
         f"create_query :: prompt was initialization. prompt: {type(prompt)} prompt_id: {prompt_id} -- {datetime.now()}",
         extra=log_extra,
