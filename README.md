@@ -1,6 +1,6 @@
 # fastapi_llm_requests
 
-**exclude exception**: but do not translate text inside <keep>...</keep> tags
+**exclude exception**: Translate, but do not translate text inside "<keep>"..."</keep>" tags.
 
 **prompt tamplate**: Translate the following text into {lang_abbr}. Use the provided context to maintain meaning and tone. Do not translate or modify any parts listed in 'exclude'.\n\n Context:\n{context}\n\n Exclude:\n{exclude}\n\n Text:\n{text}\n\n Output only the translated text without any explanations or formatting.
 
