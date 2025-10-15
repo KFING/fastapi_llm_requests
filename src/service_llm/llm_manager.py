@@ -229,9 +229,7 @@ async def modify_prompt(
     async for key in rds.hscan_iter(f"{modify_parameters.prompt_id}", no_values=True):
         prompt_id_k, version_id_k = key.decode("utf-8").split("v")
         prompt_id, version_id = prompt_version.split("v")
-        prompt_version = key if prompt_id_k > prompt_id else prompt_version
-    if prompt_version[-2] != "-":
-        prompt_version = prompt_version.decode("utf-8")
+        prompt_version = key.decode("utf-8") if version_id_k > version_id else prompt_version
     prompt_id, version_id = prompt_version.split("v")
 
     prompt_version = f"{prompt_id}v{int(version_id) + 1}"
